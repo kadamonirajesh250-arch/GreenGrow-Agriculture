@@ -1005,7 +1005,30 @@ checkoutForm.onsubmit = e => {
 
     // Simulate safe UPI verification gateways
     setTimeout(() => {
-        alert(`🎉 Om Sri Sai Traders - Order Confirmed Successfully!\n\nThank you ${nameVal}! Your payment was authenticated. Our agricultural logistics dispatch team will contact you on +91 ${phoneVal} within 24 hours to schedule delivery to your rural hub.`);
+        // Build cart summary before clearing
+        const cartSummary = cart.map(item => `- ${item.name} (Qty: ${item.qty}) - ₹${item.price * item.qty}`).join('\n');
+        const totalAmount = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
+
+        // Dispatch order confirmation email via Formspree direct endpoint
+        fetch('https://formspree.io/kadamonirajesh250@gmail.com', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                _subject: `🌱 GreenGrow New Order Confirmed - ₹${totalAmount} from ${nameVal}`,
+                customer_name: nameVal,
+                customer_phone: phoneVal,
+                shipping_address: addrVal,
+                total_amount: `₹${totalAmount}`,
+                ordered_products: cartSummary,
+                message: `Hello Rajesh, a new payment of ₹${totalAmount} has been completed on GreenGrow by ${nameVal}.`
+            })
+        }).catch(err => console.error('Email dispatch failed:', err));
+
+        alert(`🎉 Om Sri Sai Traders - Order Confirmed Successfully!\n\nThank you ${nameVal}! Your payment of ₹${totalAmount} was authenticated and an email confirmation has been sent to kadamonirajesh250@gmail.com.\n\nOur agricultural logistics dispatch team will contact you on +91 ${phoneVal} within 24 hours to schedule delivery to your rural hub.`);
+        
         cart = [];
         saveCart();
         renderCart();

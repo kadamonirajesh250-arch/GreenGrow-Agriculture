@@ -8,3 +8,8 @@ Thumbs.db
 
 # Ignore local server scripts
 start_server.ps1
+
+# Ignore Vercel settings and portable binaries
+.vercel
+node-portable/
+run_vercel.ps1
