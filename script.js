@@ -1,584 +1,1105 @@
-document.addEventListener("DOMContentLoaded", () => {
-    renderNavbar();
-    renderContent('home');
-});
-
-function switchAuthView(viewId) {
-    authManager.switchView(viewId);
-}
-
-function togglePassword(inputId, iconId) {
-    const input = document.getElementById(inputId);
-    const icon = document.getElementById(iconId);
-    if (input.type === "password") {
-        input.type = "text";
-        icon.innerText = "🔒";
-    } else {
-        input.type = "password";
-        icon.innerText = "👁️";
-    }
-}
-
-
-/**
- * =========================================================================
- * 2. YOUR EXACT WEBSITE CODE (UNCHANGED)
- * =========================================================================
- */
-
-// Application State
-const appState = {
-    currentView: 'home',
-    selectedTemple: 'Tirupati',
-    userBudget: 0
-};
-
-const templeData = {
-    Tirupati: {
-        name: "Tirumala Tirupati",
-        description: "The spiritual capital of Andhra Pradesh, visited by millions annually.",
-        images: [
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Tirumala_090615.jpg/1200px-Tirumala_090615.jpg",
-            "https://i.pinimg.com/736x/61/03/3b/61033bca53e52525f5a55afd98014f93.jpg",
-            "https://wallpapers.com/images/hd/lord-venkateswara-4k-with-lakshmi-and-bhumi-omi0tpe8n9moi1vb.jpg"
-
-        ],
-        timings: {
-            bestTime: "September to February (Pleasant weather)",
-            dailyOpen: "02:30 AM",
-            dailyClose: "11:00 PM",
-            darshanSlots: ["Free Darshan (10+ hrs wait)", "Special Entry ₹300 (2-3 hrs wait)"]
-        },
-        tickets: {
-            method: "Online Booking Required 3 months in advance.",
-            url: "https://ttdevasthanams.ap.gov.in",
-            tips: ["Book exactly at 10 AM on release date", "Carry Aadhar Card", "Wear Traditional Dress"]
-        },
-        accommodation: [{
-                type: "Free",
-                name: "Tirumala Choultries",
-                cost: 0,
-                desc: "Basic amenities, first come first serve locker system."
-            },
-            {
-                type: "Budget",
-                name: "TTD Guest Houses",
-                cost: 500,
-                desc: "Clean, simple rooms near temple complex."
-            },
-            {
-                type: "Luxury",
-                name: "Private Hotels (Tirupati)",
-                cost: 3000,
-                desc: "AC, WiFi, Room Service (Located Downhill)."
-            }
-        ],
-        food: [{
-                item: "Laddu Prasadam",
-                type: "Must Try",
-                desc: "World famous sweet offered to the deity."
-            },
-            {
-                item: "Annaprasadam",
-                type: "Free Meal",
-                desc: "Hygienic free meals provided by temple trust 24/7."
-            },
-            {
-                item: "Pulihora",
-                type: "Local",
-                desc: "Tamarind rice available at various counters."
-            }
-        ],
-        nearbyPlaces: [{
-                name: "Akasaganga Teertham",
-                dist: "3km",
-                transport: "Free Dharma Ratha Bus",
-                open: "06:00 AM - 06:00 PM",
-                image: "https://www.taxiintirupati.com/images/visit-places/akasha-ganga.jpg"
-            },
-            {
-                name: "Silathoranam",
-                dist: "1km",
-                transport: "Walk / Jeep",
-                open: "08:00 AM - 06:00 PM",
-                image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Natural_stone_arch_in_tirumala.JPG/500px-Natural_stone_arch_in_tirumala.JPG"
-            },
-            {
-                name: "Papavinasanam",
-                dist: "5km",
-                transport: "Taxi / Bus",
-                open: "06:00 AM - 06:00 PM",
-                image: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBw0NEAcNDQ0IDQ0ICAoICAgICA8ICQcNIBEWIiARExMkKDQsJCYxJx8fLTEtMTU3Ojo6IyszODM4NzQtOisBCgoKDg0NDw0NDysZFSUtNysrKys3LSsrNysrLSstKysrKysrKysrKysrLSsrKysrKysrKy0rKysrKystKys3K//AABEIAJsAzwMBIgACEQEDEQH/xAAbAAACAwEBAQAAAAAAAAAAAAADBAACBQEGB//EAFQQAAECAwMGCAoFCQUGBwAAAAIBAwAEEhETIgUhIzJCUhQxM0FRYnKRBkNhcYGCkrHB8FNjk6GiJDRzg7LC0eHxFWR0o/MHRLPT4vIWNVSElMPS/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAECAwT/xAAcEQEBAQACAwEAAAAAAAAAAAAAARESIQJBUYH/2gAMAwEAAhEDEQA/AMVlwbMOGHmFpXW1+pGUJUq4MFR1S6sVhti/ZRr2hqY41y8JJsUW8mH9I25t6OPKBM5sRfrIupdarlOzEH0CV8OLpoANg3Hm68Tk3+3mjTyX4T8KVFJZWWBHMYTExpQss4tXjtVPJZHzFpakjlS7tXoi4a+vyXhAwZ8H1Ss4jPZoRa1/rGm3Ngq0WkhWYEPR3o7w9MfHcl5S4ObLlIGrF5+TlyLttusHpjakPDSYZvq0GYv7u4MtHwbqCHR3QxeT6pbHY8PK+G/IXoMafcco4N3/AMY9NIZVl3xAgdbz7BGFXHEaaUSK2/NkWgJEiRICRIkSAkSJEgJEiRICRIkSAkSJHLYDscVfPAzcQUNSWxB4yOPMZZ8IBVbttRQbc7p7ap0QHxoTK3VgizLW1rblEJJM04YZZNCrKyq81zhrAguiuEaB/wCH5ILfU0D/AKfsQs0QbIgPbhhVAvPEtRcho1Siqb0LtHr4qv8AhwwAkMalAkXtw0L5W4hiKFWrFFCnZqjWxMNNuDa5VGtkXK6y7qvBQtujoe1XepGCVUXQi0cSyLK+kynhq0pgptUXgAB0O3nsdKedBj2EvMA4NYEJD0gtcfE5Z4hxVRrZJyrMS+No00d5gsw1rmrMOmyJY3K+vRI83kDwiGZvAdVsDbS8q1G/fG8LwKtiECr0CdcRRokLzEyDQ1uEiDvRizmX2gNgUdZFste0Lx2rcozWc2eA9FHFjPHKbFRgrjI0bRvCgu258K2xSbn5akkJ+Wz7ITYITkBp2xxFjxX/AIluzAWgM2tu8mNvq22/GG{TRUNCATED}Q3R-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"
-            }
-        ]
-    },
-
-    Madurai: {
-        name: "Meenakshi Amman Temple",
-        description: "Historic temple dedicated to Goddess Meenakshi in Tamil Nadu.",
-        images: [
-            "https://i.pinimg.com/736x/fb/76/d3/fb76d3ece5b52c30e81728de0d810b9a.jpg",
-            "https://plus.unsplash.com/premium_photo-1697729444936-8c6a6f643312?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8bWFkdXJhaSUyMHRlbXBsZXxlbnwwfHwwfHx8MA%3D%3D",
-            "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/12/c7/72/4e/madurai-meenakshi-temple.jpg?w=1200&h=-1&s=1"
-        ],
-        timings: {
-            bestTime: "October to March",
-            dailyOpen: "05:00 AM",
-            dailyClose: "10:00 PM",
-            darshanSlots: ["Free Darshan", "Special Darshan ₹100"]
-        },
-        tickets: {
-            method: "Available at temple counter & online.",
-            url: "https://www.maduraimeenakshi.org",
-            tips: ["Visit early morning", "Avoid festival rush"]
-        },
-        accommodation: [{
-            type: "Budget",
-            name: "Temple Guest Rooms",
-            cost: 700,
-            desc: "Affordable stay near temple."
-        }],
-        food: [{
-            item: "Pongal",
-            type: "Local",
-            desc: "Traditional South Indian breakfast."
-        }],
-        nearbyPlaces: [{
-            name: "Thirumalai Nayakar Palace",
-            dist: "2km",
-            transport: "Auto / Taxi",
-            open: "09:00 AM - 05:00 PM",
-            image: "https://upload.wikimedia.org/wikipedia/commons/8/83/Ruins_of_Thirumalai_Nayak_palace_in_Madurai_%281%29.jpg"
-        }]
-    },
-
-    Varanasi: {
-        name: "Kashi Vishwanath Temple",
-        description: "One of the 12 Jyotirlingas located in Varanasi.",
-        images: [
-            "https://lh3.googleusercontent.com/gps-cs-s/AHVAweoLQDyRdJwWaVm_glQCELQESrWRyzQeNXCGMMuaQoBijQ99q8XtGcj16TNDbbXdiAcJfsaZ5YmliCVsQI8xIrmeaWU3uv9vlUIp0BI9PUZin3zqMnPgoumOstIPA2nD7qFW_l4T7kNvq-s=w810-h468-n-k-no",
-            "https://cdn.vayaadventures.com/wp-content/uploads/iStock-1164329797-Varanasi-1-e1705171841552.jpg",
-            "https://qph.cf2.quoracdn.net/main-qimg-cecfa9e6c8db2671f9b7fcf12a826826-lq"
-        ],
-        timings: {
-            bestTime: "November to February",
-            dailyOpen: "03:00 AM",
-            dailyClose: "11:00 PM",
-            darshanSlots: ["Mangala Aarti", "General Darshan"]
-        },
-        tickets: {
-            method: "Online & Offline booking available.",
-            url: "https://www.shrikashivishwanath.org",
-            tips: ["Book Aarti in advance", "Keep ID proof"]
-        },
-        accommodation: [{
-            type: "Budget",
-            name: "Dharamshalas",
-            cost: 500,
-            desc: "Basic pilgrim accommodation."
-        }],
-        food: [{
-            item: "Kachori Sabzi",
-            type: "Must Try",
-            desc: "Popular Varanasi breakfast."
-        }],
-        nearbyPlaces: [{
-            name: "Dashashwamedh Ghat",
-            dist: "500m",
-            transport: "Walk",
-            open: "Open 24 Hours",
-            image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1srbA-yr-cuQPgr75ZW1yZrb7MYmYnoFFNw&s"
-        }]
-    }
-};
-
-
-class TempleService {
-    constructor() {
-        this.baseUrl = "https://api.templeguide.com";
-    }
-
-    async getDetails(templeName) {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve(templeData[templeName]);
-            }, 600);
-        });
-    }
-}
-
-const service = new TempleService();
-
-const navItems = [{
-        id: 'home',
-        label: 'Home'
+// ===== PRODUCT DATA WITH ADDITIONAL EXTENDED ATTRIBUTES =====
+const products = [
+    {
+        id: 1,
+        name: "Urea Fertilizer 50kg",
+        category: "chemical",
+        price: 450,
+        oldPrice: 600,
+        emoji: "🧪",
+        desc: "High-nitrogen chemical urea (46% N) for rapid green vegetative growth in major crops like paddy, wheat, and sugarcane.",
+        rating: 4.5,
+        stock: 15,
+        stockStatus: "instock",
+        isPopular: true
     },
     {
-        id: 'timings',
-        label: 'Timings & Best Time'
+        id: 2,
+        name: "Organic Vermicompost 10kg",
+        category: "organic",
+        price: 320,
+        oldPrice: 400,
+        emoji: "🪱",
+        desc: "100% natural earthworm compost rich in humic materials and essential nutrients, ideal for organic vegetables, fruits, and flowers.",
+        rating: 4.8,
+        stock: 4,
+        stockStatus: "lowstock"
     },
     {
-        id: 'tickets',
-        label: 'Book Tickets'
+        id: 3,
+        name: "DAP Fertilizer 50kg",
+        category: "chemical",
+        price: 1350,
+        oldPrice: 1500,
+        emoji: "⚗️",
+        desc: "Di-Ammonium Phosphate providing balanced nitrogen and highly soluble phosphorus for early root development and strong crop foundation.",
+        rating: 4.4,
+        stock: 22,
+        stockStatus: "instock",
+        isPopular: true
     },
     {
-        id: 'rooms',
-        label: 'Accommodation'
+        id: 4,
+        name: "Bt Cotton Hybrid Seeds 450g",
+        category: "seeds",
+        price: 860,
+        oldPrice: 950,
+        emoji: "☁️",
+        desc: "High-yielding F1 Hybrid Bt Cotton seeds, genetically optimized for excellent boll retention and highly resistant to bollworms.",
+        rating: 4.7,
+        stock: 0,
+        stockStatus: "outstock",
+        isPopular: true
     },
     {
-        id: 'food',
-        label: 'Food Guide'
+        id: 5,
+        name: "Paddy (Rice) Seeds 10kg",
+        category: "seeds",
+        price: 650,
+        oldPrice: 800,
+        emoji: "🌾",
+        desc: "Premium quality fine-grain rice seeds with high germination rate, rapid seedling establishment, and excellent disease resistance.",
+        rating: 4.6,
+        stock: 40,
+        stockStatus: "instock"
     },
     {
-        id: 'nearby',
-        label: 'Nearby Places'
+        id: 6,
+        name: "CP-818 Hybrid Maize Seeds 4kg (CP Seeds)",
+        category: "seeds",
+        price: 980,
+        oldPrice: 1200,
+        emoji: "🌽",
+        desc: "High-yield commercial hybrid yellow corn seeds developed by Charoen Pokphand (CP Seeds). Exceptionally drought-tolerant, features strong sturdy stalks, deep root anchorage, and uniform cobs with heavy deep grains.",
+        rating: 4.8,
+        stock: 15,
+        stockStatus: "instock",
+        image: "./images/cp_seeds.png",
+        isPopular: true
     },
     {
-        id: 'budget',
-        label: 'Budget Calculator'
+        id: 7,
+        name: "High-Yield Wheat Seeds 40kg",
+        category: "seeds",
+        price: 1400,
+        oldPrice: 1700,
+        emoji: "🌾",
+        desc: "Certified rust-resistant seed grain wheat tailored for optimal grain weight, high tillering, and premium flour quality output.",
+        rating: 4.4,
+        stock: 12,
+        stockStatus: "instock"
+    },
+    {
+        id: 8,
+        name: "Rhizobium Bio-Fertilizer 1kg",
+        category: "bio",
+        price: 150,
+        oldPrice: 200,
+        emoji: "🦠",
+        desc: "Eco-friendly biological culture designed to form root nodules and fix atmospheric nitrogen in groundnuts, soy, pulses, and legumes.",
+        rating: 4.3,
+        stock: 18,
+        stockStatus: "instock"
+    },
+    {
+        id: 9,
+        name: "NPK 19:19:19 Water Soluble 1kg",
+        category: "chemical",
+        price: 240,
+        oldPrice: 300,
+        emoji: "💧",
+        desc: "Perfectly balanced NPK fertilizer specifically engineered for drip irrigation systems and foliar spray applications.",
+        rating: 4.6,
+        stock: 8,
+        stockStatus: "instock"
+    },
+    {
+        id: 10,
+        name: "Cow Dung Manure 25kg",
+        category: "organic",
+        price: 350,
+        oldPrice: 450,
+        emoji: "🐄",
+        desc: "Fully aged, well-decomposed cow dung manure to condition garden soils, improve aeration, and boost microbial activity.",
+        rating: 4.5,
+        stock: 0,
+        stockStatus: "outstock"
+    },
+    {
+        id: 11,
+        name: "Neem Cake Powder 25kg",
+        category: "organic",
+        price: 650,
+        oldPrice: 800,
+        emoji: "🌿",
+        desc: "Organic neem kernel residual powder offering dual protection: rich plant nutrition and excellent root nematode prevention.",
+        rating: 4.7,
+        stock: 14,
+        stockStatus: "instock"
+    },
+    {
+        id: 12,
+        name: "Trichoderma Viride Bio-Fungicide 1kg",
+        category: "bio",
+        price: 180,
+        oldPrice: 240,
+        emoji: "🍄",
+        desc: "Natural biocontrol formulation that actively targets and suppresses root rot, collar rot, wilt, and damping-off crop diseases.",
+        rating: 4.5,
+        stock: 3,
+        stockStatus: "lowstock"
+    },
+    {
+        id: 13,
+        name: "Muriate of Potash (MOP) 50kg",
+        category: "chemical",
+        price: 1200,
+        oldPrice: 1450,
+        emoji: "🧱",
+        desc: "Highly soluble potassium-rich fertilizer essential for grain filling, cell wall strength, sugar transport, and environmental stress tolerance.",
+        rating: 4.3,
+        stock: 25,
+        stockStatus: "instock"
+    },
+    {
+        id: 14,
+        name: "Hybrid Tomato Seeds 10g",
+        category: "seeds",
+        price: 350,
+        oldPrice: 420,
+        emoji: "🍅",
+        desc: "Premium F1 hybrid tomato seeds designed to harvest firm, uniform, and glossy red tomatoes with extended storage shelf life.",
+        rating: 4.6,
+        stock: 50,
+        stockStatus: "instock"
+    },
+    {
+        id: 15,
+        name: "Epsom Salt (Magnesium Sulfate) 5kg",
+        category: "chemical",
+        price: 400,
+        oldPrice: 550,
+        emoji: "🧂",
+        desc: "Highly water soluble magnesium and sulfur source, preventing yellowing leaves and maximizing chlorophyll production.",
+        rating: 4.4,
+        stock: 0,
+        stockStatus: "outstock"
+    },
+    {
+        id: 16,
+        name: "Azotobacter Bio-Fertilizer 1L",
+        category: "bio",
+        price: 220,
+        oldPrice: 280,
+        emoji: "🧪",
+        desc: "Concentrated liquid nitrogen-fixing bacterial strain suitable for non-leguminous crops like wheat, paddy, cotton, and vegetables.",
+        rating: 4.2,
+        stock: 9,
+        stockStatus: "instock"
+    },
+    {
+        id: 17,
+        name: "Mustard Cake Fertilizer 5kg",
+        category: "organic",
+        price: 280,
+        oldPrice: 350,
+        emoji: "🌼",
+        desc: "Highly nutritious organic mustard oil-extraction cake, rich in natural proteins for strong root expansion and bright blooms.",
+        rating: 4.6,
+        stock: 2,
+        stockStatus: "lowstock"
+    },
+    {
+        id: 18,
+        name: "Hybrid Chilli Seeds 10g",
+        category: "seeds",
+        price: 420,
+        oldPrice: 500,
+        emoji: "🌶️",
+        desc: "Extremely pungent, disease resistant hybrid green chilli seeds with high fruit-setting capacity under hot Indian summer climates.",
+        rating: 4.5,
+        stock: 35,
+        stockStatus: "instock"
+    },
+    {
+        id: 19,
+        name: "Liquid Seaweed Extract 500ml",
+        category: "organic",
+        price: 290,
+        oldPrice: 390,
+        emoji: "🌱",
+        desc: "Natural seaweed concentration rich in growth hormones (auxins, cytokinins) and 60+ trace minerals to boost overall harvest quality.",
+        rating: 4.8,
+        stock: 11,
+        stockStatus: "instock"
+    },
+    {
+        id: 20,
+        name: "Manual Knapsack Sprayer 16L",
+        category: "tools",
+        price: 1150,
+        oldPrice: 1500,
+        emoji: "🎒",
+        desc: "Highly durable backpack compression crop sprayer with adjustable dual nozzles for easy chemical and bio mist application.",
+        rating: 4.4,
+        stock: 0,
+        stockStatus: "outstock"
+    },
+    {
+        id: 21,
+        name: "Zinc Sulfate Micro-Nutrient 5kg",
+        category: "chemical",
+        price: 380,
+        oldPrice: 450,
+        emoji: "🧪",
+        desc: "Essential micro-nutrient (21% Zn) that prevents leaf chlorosis, stunted internodes, and Khaira disease in paddy.",
+        rating: 4.4,
+        stock: 18,
+        stockStatus: "instock"
+    },
+    {
+        id: 22,
+        name: "Premium Bone Meal Powder 10kg",
+        category: "organic",
+        price: 490,
+        oldPrice: 600,
+        emoji: "🦴",
+        desc: "Organic slow-release fertilizer rich in phosphorus and calcium, encouraging heavy flowering and exceptional root structural density.",
+        rating: 4.7,
+        stock: 6,
+        stockStatus: "lowstock"
+    },
+    {
+        id: 23,
+        name: "Single Super Phosphate (SSP) 50kg",
+        category: "chemical",
+        price: 550,
+        oldPrice: 650,
+        emoji: "🧱",
+        desc: "High quality SSP fertilizer supplying phosphorus, calcium, and sulfur directly to oilseeds, pulses, and groundnut fields.",
+        rating: 4.3,
+        stock: 30,
+        stockStatus: "instock"
+    },
+    {
+        id: 24,
+        name: "Hybrid Okra (Lady Finger) Seeds 100g",
+        category: "seeds",
+        price: 260,
+        oldPrice: 320,
+        emoji: "🥒",
+        desc: "High-yield okra hybrid seeds, producing tender, dark green slim pods with excellent resistance to Yellow Vein Mosaic Virus.",
+        rating: 4.6,
+        stock: 45,
+        stockStatus: "instock"
+    },
+    {
+        id: 25,
+        name: "De-Oiled Castor Cake Powder 25kg",
+        category: "organic",
+        price: 580,
+        oldPrice: 700,
+        emoji: "🍂",
+        desc: "Castor cake organic manure with natural insecticidal compounds, preventing white grubs and termites in soil systems.",
+        rating: 4.5,
+        stock: 0,
+        stockStatus: "outstock"
+    },
+    {
+        id: 26,
+        name: "Rasi 659 BG II Cotton Seeds 450g",
+        category: "seeds",
+        price: 860,
+        oldPrice: 950,
+        emoji: "☁️",
+        desc: "One of the most popular American Upland (G. hirsutum) hybrids. Known for high boll weight, broad adaptability, and excellent tolerance to sucking pests.",
+        rating: 4.8,
+        stock: 25,
+        stockStatus: "instock",
+        isPopular: true
+    },
+    {
+        id: 27,
+        name: "Nuziveedu Bunny BG II Cotton Seeds 450g",
+        category: "seeds",
+        price: 840,
+        oldPrice: 920,
+        emoji: "☁️",
+        desc: "Highly favored for its heavy yield and large boll sizes. Features built-in resistance to the pink bollworm and adapts well to diverse soil types.",
+        rating: 4.7,
+        stock: 18,
+        stockStatus: "instock",
+        isPopular: true
+    },
+    {
+        id: 28,
+        name: "Ankur 3028 BG II Cotton Seeds 450g",
+        category: "seeds",
+        price: 810,
+        oldPrice: 900,
+        emoji: "☁️",
+        desc: "A widely used hybrid that performs exceptionally well in both irrigated and rain-fed conditions. It features excellent fibre quality and early maturity.",
+        rating: 4.6,
+        stock: 12,
+        stockStatus: "instock"
+    },
+    {
+        id: 29,
+        name: "Kaveri Mahadev BG II Cotton Seeds 450g",
+        category: "seeds",
+        price: 830,
+        oldPrice: 910,
+        emoji: "☁️",
+        desc: "A highly preferred seed variety in central and southern India, valued for its resistance to leaf-curl virus and superior fibre length.",
+        rating: 4.6,
+        stock: 14,
+        stockStatus: "instock"
+    },
+    {
+        id: 30,
+        name: "JKCHH 532 BG II (Aastha) Cotton Seeds",
+        category: "seeds",
+        price: 790,
+        oldPrice: 880,
+        emoji: "☁️",
+        desc: "Known for strong, sturdy plants and easy picking. It offers excellent yield potential even in moderate moisture-stress environments.",
+        rating: 4.5,
+        stock: 3,
+        stockStatus: "lowstock"
+    },
+    {
+        id: 31,
+        name: "Bayer Suraj Desi Cotton Seeds 450g",
+        category: "seeds",
+        price: 750,
+        oldPrice: 850,
+        emoji: "☁️",
+        desc: "A popular non-GM desi cotton (G. arboreum) suited for organic and low-input farming systems, highly resistant to regional diseases.",
+        rating: 4.7,
+        stock: 16,
+        stockStatus: "instock"
+    },
+    {
+        id: 32,
+        name: "VICH-15 Bt Cotton Seeds 450g",
+        category: "seeds",
+        price: 820,
+        oldPrice: 900,
+        emoji: "☁️",
+        desc: "A widely released early-duration transgenic variety developed by Vikram Seeds, known for strong resistance to bollworms.",
+        rating: 4.4,
+        stock: 9,
+        stockStatus: "instock"
+    },
+    {
+        id: 33,
+        name: "US 51 BG II Cotton Seeds 450g",
+        category: "seeds",
+        price: 850,
+        oldPrice: 940,
+        emoji: "☁️",
+        desc: "Ideal for farmers seeking an early-maturing, high-yielding crop that produces strong, extra-long staple fibre.",
+        rating: 4.6,
+        stock: 0,
+        stockStatus: "outstock"
+    },
+    {
+        id: 34,
+        name: "Mahyco C 73 Cotton Seeds 450g",
+        category: "seeds",
+        price: 880,
+        oldPrice: 980,
+        emoji: "☁️",
+        desc: "A sturdy hybrid released for deep-soil, irrigated tracts. Known for its resistance to bollworm and high lint output.",
+        rating: 4.5,
+        stock: 22,
+        stockStatus: "instock"
+    },
+    {
+        id: 35,
+        name: "Sri Rama Sujatha (SRCH-99 BG II) 450g",
+        category: "seeds",
+        price: 870,
+        oldPrice: 960,
+        emoji: "☁️",
+        desc: "An extensively used hybrid in southern India, recognized for its exceptional fibre strength and high ginning percentage.",
+        rating: 4.7,
+        stock: 8,
+        stockStatus: "instock"
+    },
+    {
+        id: 36,
+        name: "Waghoba Cotton Seeds 450g",
+        category: "seeds",
+        price: 890,
+        oldPrice: 990,
+        emoji: "☁️",
+        desc: "Especially prominent in Maharashtra. It is tailored for dependable irrigation systems and provides easy, clean boll bursting.",
+        rating: 4.8,
+        stock: 5,
+        stockStatus: "lowstock",
+        isPopular: true
+    },
+    {
+        id: 37,
+        name: "Mr. White BG II Cotton Seeds 450g",
+        category: "seeds",
+        price: 800,
+        oldPrice: 890,
+        emoji: "☁️",
+        desc: "Produces tall, erect plants with long-lasting greenery. It is well-regarded for its heavy bolls and effortless harvesting.",
+        rating: 4.5,
+        stock: 15,
+        stockStatus: "instock"
+    },
+    {
+        id: 38,
+        name: "Chamko Cotton Seeds 450g",
+        category: "seeds",
+        price: 780,
+        oldPrice: 870,
+        emoji: "☁️",
+        desc: "An ideal choice for dryland, rain-fed cotton zones. It boasts excellent tolerance to sucking pests and is highly adaptable to low-input farming.",
+        rating: 4.4,
+        stock: 30,
+        stockStatus: "instock"
+    },
+    {
+        id: 39,
+        name: "Suvin Premium Cotton Seeds 450g",
+        category: "seeds",
+        price: 950,
+        oldPrice: 1100,
+        emoji: "☁️",
+        desc: "An extra-long staple premium variety (G. barbadense). It is renowned for high-quality, silky fibres and requires irrigated land.",
+        rating: 4.9,
+        stock: 4,
+        stockStatus: "lowstock"
+    },
+    {
+        id: 40,
+        name: "Jayadhar Cotton Seeds 450g",
+        category: "seeds",
+        price: 720,
+        oldPrice: 800,
+        emoji: "☁️",
+        desc: "A traditional Asiatic diploid cotton seed widely grown in Karnataka. It performs well under rain-fed conditions and yields good medium-staple lint.",
+        rating: 4.5,
+        stock: 40,
+        stockStatus: "instock"
     }
 ];
 
-const renderNavbar = () => {
-    const navContainer = document.getElementById('main-navbar');
-    const mobileMenu = document.getElementById('mobile-menu');
-
-    const linksHtml = navItems.map(item => `
-        <li class="list-none flex items-center">
-            <a href="#" 
-               onclick="handleNavClick(event, '${item.id}')"
-               class="nav-link py-2 px-1 block text-center whitespace-nowrap text-white">
-               ${item.label}
-            </a>
-        </li>
-    `).join('');
-
-    navContainer.innerHTML = linksHtml;
-    mobileMenu.innerHTML = `<ul class="space-y-2 flex flex-col">${linksHtml}</ul>`;
+const reviewDatabase = {
+    chemical: [
+        { stars: "⭐⭐⭐⭐⭐", text: "Gives immediate greening response. Highly recommend for paddy cultivation.", name: "Rajesh K." },
+        { stars: "⭐⭐⭐⭐⭐", text: "Very soluble in water, worked perfectly in my drip lines.", name: "Vikas Patil" }
+    ],
+    organic: [
+        { stars: "⭐⭐⭐⭐⭐", text: "Odor-free, cleanly packed and completely dry vermicompost. Excellent for tomatoes.", name: "Spoorthi" },
+        { stars: "⭐⭐⭐⭐⭐", text: "Outstanding quality. Soil texture improved noticeably after one month.", name: "Harpreet S." }
+    ],
+    seeds: [
+        { stars: "⭐⭐⭐⭐⭐", text: "Exceptional germination rate! 95% of seeds sprouted within 4 days.", name: "kadamoni" },
+        { stars: "⭐⭐⭐⭐", text: "Very uniform crops. Highly resistant to the usual bollworms.", name: "Devender G." }
+    ],
+    bio: [
+        { stars: "⭐⭐⭐⭐⭐", text: "Naturally boosted root efficiency. Saw thick root nodules on my chickpeas.", name: "Arjun P." },
+        { stars: "⭐⭐⭐⭐", text: "Excellent biological alternative. Reduces chemical urea dependency.", name: "Srinivas Rao" }
+    ],
+    tools: [
+        { stars: "⭐⭐⭐⭐⭐", text: "Top grade build quality. Battery lasts easily for 6-8 continuous hours.", name: "Manpreet S." },
+        { stars: "⭐⭐⭐⭐", text: "Very clean cuts, carbon steel blades are extremely sharp.", name: "Ranganathan" }
+    ]
 };
 
-function handleNavClick(event, viewId) {
-    if (event) event.preventDefault();
+const defaultReviews = [
+    { stars: "⭐⭐⭐⭐⭐", text: "Extremely satisfied with the delivery and packaging quality.", name: "Farmer Guest" }
+];
 
-    document.getElementById('mobile-menu').classList.add('hidden');
+// ===== STATE CONTROL =====
+let currentCategory = "all";
+let currentSearch = "";
+let currentSort = "default";
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+let cardQuantities = {};
 
-    appState.currentView = viewId;
-    renderContent(viewId);
-}
+// ===== DOM NODES =====
+const productGrid = document.getElementById("productGrid");
+const searchInput = document.getElementById("searchInput");
+const searchBtn = document.getElementById("searchBtn");
+const sortSelect = document.getElementById("sortSelect");
 
-async function renderContent(viewId) {
-    const container = document.getElementById('app-container');
+const cartBtn = document.getElementById("cartBtn");
+const cartSidebar = document.getElementById("cartSidebar");
+const closeCart = document.getElementById("closeCart");
+const cartItemsEl = document.getElementById("cartItems");
+const cartTotalEl = document.getElementById("cartTotal");
+const cartCountEl = document.getElementById("cartCount");
 
-    if (typeof carouselInterval !== 'undefined' && carouselInterval) clearInterval(carouselInterval);
+const wishlistCountEl = document.getElementById("wishlistCount");
+const wishlistNavBtn = document.getElementById("wishlistNavBtn");
+const wishlistSidebar = document.getElementById("wishlistSidebar");
+const wishlistItemsEl = document.getElementById("wishlistItems");
+const closeWishlist = document.getElementById("closeWishlist");
 
-    container.innerHTML = `
-        <div class="loader-wrapper flex flex-col justify-center items-center h-64">
-            <div class="loader"></div>
-            <h2 class="loader-text">Loading sacred guide...</h2>
-        </div>`;
+const detailsSidebar = document.getElementById("detailsSidebar");
+const detailsBody = document.getElementById("detailsBody");
+const closeDetails = document.getElementById("closeDetails");
 
-    const data = await service.getDetails(appState.selectedTemple);
+const checkoutModal = document.getElementById("checkoutModal");
+const closeCheckout = document.getElementById("closeCheckout");
+const checkoutTotalAmount = document.getElementById("checkoutTotalAmount");
+const checkoutForm = document.getElementById("checkoutForm");
+const cartCheckoutBtn = document.getElementById("cartCheckoutBtn");
 
-    let contentHtml = '';
-
-    switch (viewId) {
-        case 'home':
-            contentHtml = `
-                <div class="text-center fade-in home-view-layout">
-                    <h2 class="temple-primary-title">${data.name}</h2>
-                    <p class="temple-primary-desc">${data.description}</p>
-                    
-                    <div class="carousel-container relative w-full max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl group">
-                        <div id="carousel-slides" class="w-full h-full relative">
-                            ${data.images.map((img, index) => `
-                                <div class="slide absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === 0 ? 'opacity-100' : 'opacity-0'}">
-                                    <img src="${img}" alt="Temple View ${index + 1}" class="w-full h-full object-cover">
-                                </div>
-                            `).join('')}
-                        </div>
-                        <button onclick="changeSlide(-1)" class="carousel-btn prev-btn" aria-label="Previous Slide">&#10094;</button>
-                        <button onclick="changeSlide(1)" class="carousel-btn next-btn" aria-label="Next Slide">&#10095;</button>
-                    </div>
-                    
-                    <div class="quick-status-grid">
-                        <div class="status-card border-orange">
-                            <h3 class="status-card-title">Today's Timings</h3>
-                            <p class="status-card-value">${data.timings.dailyOpen} - ${data.timings.dailyClose}</p>
-                        </div>
-                        <div class="status-card border-green">
-                            <h3 class="status-card-title">Darshan Status</h3>
-                            <p class="status-card-value">Special Entry Available</p>
-                        </div>
-                        <div class="status-card border-blue">
-                            <h3 class="status-card-title">Weather</h3>
-                            <p class="status-card-value">24°C, Pleasant</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            setTimeout(startCarousel, 100);
-            break;
-
-        case 'timings':
-            contentHtml = `
-                <div class="max-w-3xl mx-auto bg-card-glow p-8 rounded-xl shadow-lg fade-in card-view-layout">
-                    <h2 class="view-section-title">Timings & Best Time to Visit</h2>
-                    <div class="space-y-6 flex flex-col gap-6">
-                        <div class="timing-info-row">
-                            <div class="info-icon saffron-bg">📅</div>
-                            <div>
-                                <h4 class="info-title">Seasonal Advice</h4>
-                                <p class="info-desc">${data.timings.bestTime}</p>
-                            </div>
-                        </div>
-                        <div class="timing-info-row">
-                            <div class="info-icon saffron-bg">⏰</div>
-                            <div>
-                                <h4 class="info-title">Daily Schedule</h4>
-                                <p class="info-desc"><strong>Opens:</strong> ${data.timings.dailyOpen}</p>
-                                <p class="info-desc"><strong>Closes:</strong> ${data.timings.dailyClose}</p>
-                            </div>
-                        </div>
-                        <div class="darshan-info-box">
-                            <h4 class="darshan-box-title">Available Darshan Types</h4>
-                            <ul class="darshan-list">
-                                ${data.timings.darshanSlots.map(slot => `<li>${slot}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            `;
-            break;
-
-        case 'tickets':
-            contentHtml = `
-                <div class="max-w-3xl mx-auto bg-card-glow p-8 rounded-xl shadow-lg fade-in card-view-layout">
-                    <h2 class="view-section-title">Booking Tickets</h2>
-                    <div class="booking-notice-warning">
-                        <p class="notice-text">⚠️ <strong>Important Note:</strong> ${data.tickets.method}</p>
-                    </div>
-                    <h3 class="info-subtitle">Bespoke Tips & Guidelines:</h3>
-                    <ul class="guidelines-list">
-                        ${data.tickets.tips.map(tip => `<li>${tip}</li>`).join('')}
-                    </ul>
-                    <a href="${data.tickets.url}" target="_blank" rel="noopener" class="btn btn-primary block w-full text-center py-3 font-bold shadow-md go-official-btn">
-                        Go to Official Booking Portal
-                    </a>
-                </div>
-            `;
-            break;
-
-        case 'rooms':
-            contentHtml = `
-                <div class="fade-in card-view-layout">
-                    <h2 class="view-section-title text-center">Accommodation Options</h2>
-                    <div class="rooms-grid">
-                        ${data.accommodation.map(room => `
-                            <div class="room-card flex flex-col">
-                                <div class="room-avatar">🛏️</div>
-                                <div class="room-body flex-grow">
-                                    <div class="room-title-row">
-                                        <h3 class="room-name">${room.name}</h3>
-                                        <span class="room-badge">${room.type}</span>
-                                    </div>
-                                    <p class="room-desc">${room.desc}</p>
-                                </div>
-                                <div class="room-footer border-t">
-                                    <span class="room-price">₹${room.cost}<span class="price-suffix">/day</span></span>
-                                    <button class="room-details-btn">Details &rarr;</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-            break;
-
-        case 'food':
-            contentHtml = `
-                <div class="max-w-4xl mx-auto fade-in card-view-layout">
-                    <h2 class="view-section-title text-center">Best Food & Prasadam Guide</h2>
-                    <div class="food-grid">
-                        ${data.food.map(f => `
-                            <div class="food-card">
-                                <div class="food-icon">🍛</div>
-                                <div class="food-body">
-                                    <h4 class="food-item-title">${f.item}</h4>
-                                    <p class="food-item-desc">${f.desc}</p>
-                                    <span class="food-item-type">${f.type}</span>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-            break;
-
-        case 'nearby':
-            contentHtml = `
-                <div class="space-y-6 fade-in max-w-4xl mx-auto card-view-layout">
-                    <h2 class="view-section-title text-center">Nearby Spiritual Attractions</h2>
-                    <div class="notice-info-box">
-                        <p>Explore these beautiful places easily without a personal guide.</p>
-                    </div>
-                    <div class="attractions-list">
-                        ${data.nearbyPlaces.map(place => `
-                            <div class="attraction-card">
-                                <img src="${place.image}" alt="${place.name}" class="attraction-img">
-                                <div class="attraction-body flex-grow">
-                                    <h3 class="attraction-name">${place.name}</h3>
-                                    <p class="attraction-dist">Distance from temple: <strong>${place.dist}</strong></p>
-                                </div>
-                                <div class="attraction-info-badges">
-                                    <div class="badge badge-open">
-                                        <span class="badge-label">Hours</span>
-                                        <strong>${place.open}</strong>
-                                    </div>
-                                    <div class="badge badge-transit">
-                                        <span class="badge-label">Transport</span>
-                                        <strong>${place.transport}</strong>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-            break;
-
-        case 'budget':
-            contentHtml = `
-                <div class="max-w-xl mx-auto bg-card-glow p-8 rounded-xl shadow-lg fade-in card-view-layout">
-                    <h2 class="view-section-title budget-title">
-                        <span>💰</span> Smart Trip Budget Estimator
-                    </h2>
-                    
-                    <form id="budget-form" onsubmit="calculateBudget(event)" class="space-y-5 budget-form">
-                        <div class="form-group">
-                            <label for="people">Number of People</label>
-                            <input type="number" id="people" required min="1" value="1">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="transport">Transport Cost (Round trip per person)</label>
-                            <input type="number" id="transport" placeholder="e.g., 1500" min="0">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="acc-type">Accommodation Type</label>
-                            <select id="acc-type">
-                                <option value="0">Free (Choultries)</option>
-                                <option value="500">Budget (₹500/day)</option>
-                                <option value="3000">Luxury (₹3000/day)</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="days">Days of Stay</label>
-                            <input type="number" id="days" value="1" min="1">
-                        </div>
-                        
-                        <button type="submit" class="btn btn-success block w-full py-3 font-bold shadow-md budget-calc-btn">
-                            Calculate Total Cost
-                        </button>
-                    </form>
-
-                    <div id="budget-result" class="hidden budget-result-box fade-in">
-                        <p class="budget-result-label">Estimated Total Cost</p>
-                        <p class="budget-result-value" id="total-cost">₹0</p>
-                        <p class="budget-result-footnote">*Includes estimated food cost of ₹300/person/day</p>
-                    </div>
-                </div>
-            `;
-            break;
-    }
-
-    container.innerHTML = contentHtml;
-}
-
-// ==========================================
-//       Budget Calculation Logic
-// ==========================================
-function calculateBudget(event) {
-    event.preventDefault();
-
-    const people = parseInt(document.getElementById('people').value) || 0;
-    const transport = parseInt(document.getElementById('transport').value) || 0;
-    const roomCost = parseInt(document.getElementById('acc-type').value) || 0;
-    const days = parseInt(document.getElementById('days').value) || 0;
-
-    const foodCostPerDay = 300;
-
-    const totalTransport = transport * people;
-    const roomsNeeded = Math.ceil(people / 2);
-    const totalRoom = roomCost * days * roomsNeeded;
-    const totalFood = foodCostPerDay * people * days;
-
-    const total = totalTransport + totalRoom + totalFood;
-
-    const resultDiv = document.getElementById('budget-result');
-    const costText = document.getElementById('total-cost');
-
-    resultDiv.classList.remove('hidden');
-    resultDiv.classList.add('fade-in');
-    costText.innerText = `₹${total.toLocaleString("en-IN")}`;
-}
-
-function changeTemple(templeName) {
-    appState.selectedTemple = templeName;
-    
-    // Sync header dropdowns if mobile or desktop
-    const selects = ['temple-select'];
-    selects.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = templeName;
+// ===== RENDER SYSTEM =====
+function renderProducts() {
+    let list = products.filter(p => {
+        const matchCat = currentCategory === "all" || p.category === currentCategory;
+        const matchSearch = p.name.toLowerCase().includes(currentSearch.toLowerCase()) || 
+                            p.desc.toLowerCase().includes(currentSearch.toLowerCase());
+        return matchCat && matchSearch;
     });
 
-    appState.currentView = 'home';
-    renderContent('home');
-}
-
-// Mobile menu toggle
-document.addEventListener("DOMContentLoaded", () => {
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', () => {
-            const menu = document.getElementById('mobile-menu');
-            if (menu) menu.classList.toggle('hidden');
+    if (currentSort === "low") list.sort((a, b) => a.price - b.price);
+    if (currentSort === "high") list.sort((a, b) => b.price - a.price);
+    if (currentSort === "discount") {
+        list.sort((a, b) => {
+            const discA = (a.oldPrice - a.price) / a.oldPrice;
+            const discB = (b.oldPrice - b.price) / b.oldPrice;
+            return discB - discA;
         });
     }
+
+    productGrid.innerHTML = "";
+
+    if (list.length === 0) {
+        productGrid.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:60px; font-size:1.1rem; font-weight:500;">No farming products match your search or filter settings.</p>`;
+        return;
+    }
+
+    const imageSrcMap = {
+        seeds: "./images/seeds.png",
+        organic: "./images/organic.png",
+        chemical: "./images/chemical.png",
+        bio: "./images/organic.png",
+        tools: "./images/tools.png"
+    };
+
+    list.forEach(p => {
+        const discount = Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100);
+        if (!cardQuantities[p.id]) cardQuantities[p.id] = 1;
+
+        const isWished = wishlist.includes(p.id);
+        const stockLabels = {
+            instock: "In Stock",
+            lowstock: "Low Stock",
+            outstock: "Out of Stock"
+        };
+
+        const imageSrc = p.image || imageSrcMap[p.category] || "./images/seeds.png";
+
+        const card = document.createElement("article");
+        card.className = "product-card";
+        card.setAttribute("tabindex", "0");
+        card.innerHTML = `
+          <div class="badge-stock ${p.stockStatus}">${stockLabels[p.stockStatus]}</div>
+          <button class="wishlist-heart-btn" title="Add to Wishlist" aria-label="Add to Wishlist">${isWished ? "❤️" : "🤍"}</button>
+          <div class="product-img" aria-hidden="true" style="background-image: url('${imageSrc}'); background-size: cover; background-position: center; height: 160px; display: flex; align-items: center; justify-content: center; position: relative;">
+              ${p.isPopular ? `<span class="popular-badge" style="position: absolute; bottom: 8px; left: 8px; background: var(--accent); color: var(--text-main); padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; box-shadow: var(--shadow-sm); letter-spacing: 0.5px; z-index: 5;">🔥 Popular</span>` : ''}
+              <span class="emoji-badge" style="position: absolute; bottom: 8px; right: 8px; background: rgba(255,255,255,0.85); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: var(--shadow-sm);">${p.emoji}</span>
+          </div>
+          <h3 class="product-name">${p.name}</h3>
+          <div class="product-price">
+            <span class="price-new">₹${p.price}</span>
+            <span class="price-old">₹${p.oldPrice}</span>
+          </div>
+          <div class="discount">${discount}% OFF</div>
+
+          <div class="card-buttons">
+            <button class="add-cart-btn" ${p.stockStatus === "outstock" ? "disabled" : ""}>
+              ${p.stockStatus === "outstock" ? "No Stock" : "Add to Cart"}
+            </button>
+            <button class="inline-details-btn">Details</button>
+          </div>
+        `;
+
+        // Wishlist heart button trigger
+        card.querySelector(".wishlist-heart-btn").onclick = (e) => {
+            e.stopPropagation();
+            toggleWishlist(p.id);
+        };
+
+        // Add to cart click
+        card.querySelector(".add-cart-btn").onclick = (e) => {
+            e.stopPropagation();
+            addToCart(p.id, 1);
+        };
+
+        // Details drawer trigger
+        card.querySelector(".inline-details-btn").onclick = (e) => {
+            e.stopPropagation();
+            openDetailsSidebar(p);
+        };
+
+        card.onclick = () => openDetailsSidebar(p);
+        
+        // Accessibility: Support Enter click
+        card.onkeydown = (e) => {
+            if (e.key === "Enter") {
+                openDetailsSidebar(p);
+            }
+        };
+
+        productGrid.appendChild(card);
+    });
+}
+
+// ===== DETAILS SIDEBAR LOGIC =====
+function openDetailsSidebar(p) {
+    const discount = Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100);
+    const categoryReviews = reviewDatabase[p.category] || defaultReviews;
+    const isWished = wishlist.includes(p.id);
+
+    let reviewsHtml = '';
+    categoryReviews.forEach(rev => {
+        reviewsHtml += `<div class="review">${rev.stars} "${rev.text}" - <strong>${rev.name}</strong></div>`;
+    });
+
+    // Close other drawers to keep layout clean
+    cartSidebar.classList.add("hidden");
+    wishlistSidebar.classList.add("hidden");
+    detailsSidebar.setAttribute("aria-hidden", "false");
+
+    const imageSrcMap = {
+        seeds: "./images/seeds.png",
+        organic: "./images/organic.png",
+        chemical: "./images/chemical.png",
+        bio: "./images/organic.png",
+        tools: "./images/tools.png"
+    };
+    const imageSrc = p.image || imageSrcMap[p.category] || "./images/seeds.png";
+
+    detailsBody.innerHTML = `
+    <div class="product-img" aria-hidden="true" style="background-image: url('${imageSrc}'); background-size: cover; background-position: center; height: 240px; display: flex; align-items: center; justify-content: center; position: relative; border-radius: var(--radius-md);">
+        <span class="emoji-badge" style="position: absolute; bottom: 12px; right: 12px; background: rgba(255,255,255,0.85); border-radius: 50%; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: var(--shadow-md);">${p.emoji}</span>
+    </div>
+    <div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap: 10px;">
+        <h2>${p.name}</h2>
+        <button id="sidebarHeartBtn" style="background:none; border:none; font-size:1.8rem; cursor:pointer;" aria-label="Toggle Wishlist">${isWished ? "❤️" : "🤍"}</button>
+      </div>
+      ${p.isPopular ? `<div style="margin-top: 8px;"><span class="sidebar-popular-badge" style="background: var(--accent); color: var(--text-main); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; display: inline-block;">🔥 Popular Choice</span></div>` : ''}
+      <div class="product-price" style="margin:16px 0; align-items: center;">
+        <span class="price-new" style="font-size:1.6rem; color:var(--primary); font-weight:700; font-family:var(--font-heading);">₹${p.price}</span>
+        <span class="price-old" style="text-decoration:line-through; color:var(--text-muted); margin:0 12px; font-size: 1.1rem;">₹${p.oldPrice}</span>
+        <span class="discount" style="color:var(--danger); font-weight:700; font-size: 0.95rem; margin-bottom:0;">${discount}% OFF</span>
+      </div>
+      <p style="color:var(--text-muted); line-height:1.6; margin-bottom:16px; font-size: 0.95rem;">${p.desc}</p>
+      <p style="margin-bottom:20px; font-weight: 500; font-size: 0.95rem;">
+        Germination/Rating: ⭐ <strong>${p.rating} / 5</strong> | Sacks/Packs Available: <span style="color: var(--primary); font-weight:700;">${p.stock}</span>
+      </p>
+      
+      <div class="card-qty-row" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; background: var(--primary-light); padding: 12px 18px; border-radius: var(--radius-sm); border: 1px dashed var(--primary);">
+        <span style="font-weight: 700; color: var(--primary); font-size: 0.95rem;">Select Quantity:</span>
+        <div class="card-qty-controls" style="display: flex; align-items: center; gap: 14px;">
+          <button id="sidebarDecBtn" style="width: 32px; height: 32px; font-weight: 700; border: 1px solid var(--primary); background: white; color: var(--primary); cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">-</button>
+          <span id="sidebarQtyDisplay" style="font-weight: 700; font-size: 1.1rem; min-width: 20px; text-align: center;">${cardQuantities[p.id]}</span>
+          <button id="sidebarIncBtn" style="width: 32px; height: 32px; font-weight: 700; border: 1px solid var(--primary); background: white; color: var(--primary); cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">+</button>
+        </div>
+      </div>
+
+      <div class="sidebar-action-buttons">
+        <button class="add-cart-btn" id="sidebarAdd" style="padding:14px; font-size: 0.95rem;" ${p.stockStatus === "outstock" ? "disabled" : ""}>
+          ${p.stockStatus === "outstock" ? "Out of Stock" : "Add Selected to Cart"}
+        </button>
+        <button class="buy-now" id="sidebarBuy" ${p.stockStatus === "outstock" ? "disabled" : ""}>Buy Now</button>
+        <button class="back-btn" id="sidebarBack">← Back to Catalog</button>
+      </div>
+
+      <div class="reviews">
+        <h4>Recent Verified Farmer Reviews</h4>
+        ${reviewsHtml}
+      </div>
+    </div>
+  `;
+
+    // Quantity selectors in details sidebar
+    document.getElementById("sidebarIncBtn").onclick = () => {
+        cardQuantities[p.id]++;
+        document.getElementById("sidebarQtyDisplay").textContent = cardQuantities[p.id];
+    };
+
+    document.getElementById("sidebarDecBtn").onclick = () => {
+        if (cardQuantities[p.id] > 1) {
+            cardQuantities[p.id]--;
+            document.getElementById("sidebarQtyDisplay").textContent = cardQuantities[p.id];
+        }
+    };
+
+    // Wishlist toggle from details sidebar
+    document.getElementById("sidebarHeartBtn").onclick = () => {
+        toggleWishlist(p.id);
+        openDetailsSidebar(p); // Re-render details sidebar panel to update heart state
+    };
+
+    // Add selected quantity to cart
+    document.getElementById("sidebarAdd").onclick = () => {
+        addToCart(p.id, cardQuantities[p.id]);
+        cardQuantities[p.id] = 1; // Reset back to default
+    };
+
+    // Direct Buy Now operation
+    document.getElementById("sidebarBuy").onclick = () => {
+        addToCart(p.id, cardQuantities[p.id]);
+        cardQuantities[p.id] = 1;
+        detailsSidebar.classList.add("hidden");
+        detailsSidebar.setAttribute("aria-hidden", "true");
+        cartSidebar.classList.remove("hidden");
+        cartSidebar.setAttribute("aria-hidden", "false");
+    };
+
+
+
+    // Go back
+    document.getElementById("sidebarBack").onclick = () => {
+        detailsSidebar.classList.add("hidden");
+        detailsSidebar.setAttribute("aria-hidden", "true");
+    };
+
+    detailsSidebar.classList.remove("hidden");
+}
+
+closeDetails.onclick = () => {
+    detailsSidebar.classList.add("hidden");
+    detailsSidebar.setAttribute("aria-hidden", "true");
+};
+
+// ===== WISHLIST SIDEBAR ENGINE =====
+function toggleWishlist(id) {
+    const idx = wishlist.indexOf(id);
+
+    if (idx > -1) {
+        wishlist.splice(idx, 1);
+    } else {
+        wishlist.push(id);
+    }
+
+    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+    updateWishlistCount();
+    renderProducts();
+    renderWishlist();
+}
+
+function updateWishlistCount() {
+    wishlistCountEl.textContent = wishlist.length;
+}
+
+function renderWishlist() {
+    if (wishlist.length === 0) {
+        wishlistItemsEl.innerHTML = `
+          <div class="empty-cart">
+             <span style="font-size: 3rem; display: block; margin-bottom: 12px;">❤️</span>
+             Your wishlist is currently empty. Click hearts on products to save them!
+          </div>
+        `;
+        return;
+    }
+
+    wishlistItemsEl.innerHTML = "";
+    const savedProducts = products.filter(p => wishlist.includes(p.id));
+
+    savedProducts.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "wishlist-item";
+        row.innerHTML = `
+          <div class="wishlist-item-emoji" aria-hidden="true">${item.emoji}</div>
+          <div class="wishlist-item-info">
+            <h4>${item.name}</h4>
+            <p>₹${item.price}</p>
+            <div class="wishlist-action-row">
+               <button class="wishlist-to-cart-btn" ${item.stockStatus === "outstock" ? "disabled" : ""}>
+                 ${item.stockStatus === "outstock" ? "Out of Stock" : "🛒 Add to Cart"}
+               </button>
+            </div>
+          </div>
+          <button class="remove-btn" title="Remove Item" aria-label="Remove Item">🗑️</button>
+        `;
+
+        // Transfer from Wishlist to Cart
+        row.querySelector(".wishlist-to-cart-btn").onclick = () => {
+            if (item.stockStatus !== "outstock") {
+                addToCart(item.id, 1);
+            }
+        };
+
+        // Remove from Wishlist
+        row.querySelector(".remove-btn").onclick = () => {
+            toggleWishlist(item.id);
+        };
+
+        wishlistItemsEl.appendChild(row);
+    });
+}
+
+wishlistNavBtn.onclick = () => {
+    detailsSidebar.classList.add("hidden");
+    detailsSidebar.setAttribute("aria-hidden", "true");
+    cartSidebar.classList.add("hidden");
+    cartSidebar.setAttribute("aria-hidden", "true");
+    
+    wishlistSidebar.classList.remove("hidden");
+    wishlistSidebar.setAttribute("aria-hidden", "false");
+};
+
+closeWishlist.onclick = () => {
+    wishlistSidebar.classList.add("hidden");
+    wishlistSidebar.setAttribute("aria-hidden", "true");
+};
+
+// ===== CART CORE LOGIC =====
+function addToCart(id, explicitQty = 1) {
+    const existing = cart.find(item => item.id === id);
+    if (existing) {
+        existing.qty += explicitQty;
+    } else {
+        const p = products.find(p => p.id === id);
+        cart.push({
+            ...p,
+            qty: explicitQty
+        });
+    }
+    saveCart();
+    renderCart();
+
+    // Elegant bump micro-animation on adding
+    cartBtn.style.transform = "scale(1.15)";
+    setTimeout(() => cartBtn.style.transform = "", 250);
+}
+
+function changeQty(id, delta) {
+    const item = cart.find(i => i.id === id);
+    if (!item) return;
+    item.qty += delta;
+    if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
+    saveCart();
+    renderCart();
+}
+
+function removeItem(id) {
+    cart = cart.filter(i => i.id !== id);
+    saveCart();
+    renderCart();
+}
+
+function saveCart() {
+    localStorage.setItem("cart", JSON.stringify(cart));
+}
+
+function renderCart() {
+    const totalItems = cart.reduce((sum, i) => sum + i.qty, 0);
+    cartCountEl.textContent = totalItems;
+
+    if (cart.length === 0) {
+        cartItemsEl.innerHTML = `
+           <div class="empty-cart">
+             <span style="font-size: 3rem; display: block; margin-bottom: 12px;">🛒</span>
+             Your shopping cart is empty. Add crops, seeds, and fertilizers to get started!
+           </div>
+        `;
+        cartTotalEl.textContent = "0";
+        return;
+    }
+
+    cartItemsEl.innerHTML = "";
+    let total = 0;
+    
+    cart.forEach(item => {
+        total += item.price * item.qty;
+        const el = document.createElement("div");
+        el.className = "cart-item";
+        el.innerHTML = `
+          <div class="cart-item-emoji" aria-hidden="true">${item.emoji}</div>
+          <div class="cart-item-info">
+            <h4>${item.name}</h4>
+            <p>₹${item.price} × ${item.qty} = ₹${item.price * item.qty}</p>
+            <div class="qty-controls">
+              <button data-act="dec" aria-label="Decrease quantity">−</button>
+              <span>${item.qty}</span>
+              <button data-act="inc" aria-label="Increase quantity">+</button>
+            </div>
+          </div>
+          <button class="remove-btn" title="Remove Item" aria-label="Remove Item">🗑️</button>
+        `;
+        el.querySelector('[data-act="inc"]').onclick = () => changeQty(item.id, 1);
+        el.querySelector('[data-act="dec"]').onclick = () => changeQty(item.id, -1);
+        el.querySelector('.remove-btn').onclick = () => removeItem(item.id);
+        cartItemsEl.appendChild(el);
+    });
+    
+    cartTotalEl.textContent = total.toLocaleString('en-IN');
+}
+
+cartBtn.onclick = () => {
+    detailsSidebar.classList.add("hidden");
+    detailsSidebar.setAttribute("aria-hidden", "true");
+    wishlistSidebar.classList.add("hidden");
+    wishlistSidebar.setAttribute("aria-hidden", "true");
+    
+    cartSidebar.classList.remove("hidden");
+    cartSidebar.setAttribute("aria-hidden", "false");
+};
+
+closeCart.onclick = () => {
+    cartSidebar.classList.add("hidden");
+    cartSidebar.setAttribute("aria-hidden", "true");
+};
+
+// ===== CHECKOUT ROUTINE =====
+cartCheckoutBtn.onclick = () => {
+    if (cart.length === 0) {
+        alert("Your cart is empty! Add high quality organic goods first. 🛒");
+        return;
+    }
+    const finalAmt = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
+    checkoutTotalAmount.textContent = finalAmt.toLocaleString('en-IN');
+    
+    cartSidebar.classList.add("hidden");
+    cartSidebar.setAttribute("aria-hidden", "true");
+    
+    checkoutModal.classList.remove("hidden");
+    checkoutModal.setAttribute("aria-hidden", "false");
+};
+
+closeCheckout.onclick = () => {
+    checkoutModal.classList.add("hidden");
+    checkoutModal.setAttribute("aria-hidden", "true");
+};
+
+checkoutForm.onsubmit = e => {
+    e.preventDefault();
+    
+    const nameVal = document.getElementById("checkoutName").value.trim();
+    const phoneVal = document.getElementById("checkoutPhone").value.trim();
+    const addrVal = document.getElementById("checkoutAddress").value.trim();
+    
+    // Validations
+    if (!nameVal) {
+        alert("Please enter your full name.");
+        return;
+    }
+    if (!/^\d{10}$/.test(phoneVal)) {
+        alert("Please enter a valid 10-digit mobile number linked to your UPI.");
+        return;
+    }
+    if (addrVal.length < 15) {
+        alert("Please write a detailed shipping address (including Village/Taluk/Pincode) for accurate freight delivery.");
+        return;
+    }
+
+    const submitBtn = document.getElementById("submitPaymentBtn");
+    submitBtn.textContent = "Processing Rural Freight Order...";
+    submitBtn.disabled = true;
+
+    // Simulate safe UPI verification gateways
+    setTimeout(() => {
+        alert(`🎉 Om Sri Sai Traders - Order Confirmed Successfully!\n\nThank you ${nameVal}! Your payment was authenticated. Our agricultural logistics dispatch team will contact you on +91 ${phoneVal} within 24 hours to schedule delivery to your rural hub.`);
+        cart = [];
+        saveCart();
+        renderCart();
+        checkoutForm.reset();
+        
+        submitBtn.textContent = "Verify & Confirm Order";
+        submitBtn.disabled = false;
+        checkoutModal.classList.add("hidden");
+        checkoutModal.setAttribute("aria-hidden", "true");
+    }, 2000);
+};
+
+// ===== CATEGORY SWITCH EVENTS =====
+document.querySelectorAll(".cat-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentCategory = btn.getAttribute("data-category");
+        renderProducts();
+    });
 });
 
-// ==========================================
-// CAROUSEL LOGIC
-// ==========================================
-let carouselInterval = null;
-let currentSlideIndex = 0;
+// ===== SEARCH ACTIONS =====
+searchInput.addEventListener("input", e => {
+    currentSearch = e.target.value;
+    renderProducts();
+});
 
-function startCarousel() {
-    currentSlideIndex = 0;
-    if (carouselInterval) clearInterval(carouselInterval);
-    carouselInterval = setInterval(() => {
-        changeSlide(1);
-    }, 3000);
+searchBtn.onclick = () => {
+    currentSearch = searchInput.value;
+    renderProducts();
+};
+
+searchInput.onkeydown = (e) => {
+    if (e.key === "Enter") {
+        currentSearch = searchInput.value;
+        renderProducts();
+    }
+};
+
+// ===== SORT SELECT CHANGE =====
+sortSelect.onchange = e => {
+    currentSort = e.target.value;
+    renderProducts();
+};
+
+// ===== BANNER SLIDER LOGIC =====
+const slidesContainer = document.getElementById("slides");
+const slideElements = document.querySelectorAll(".slide");
+const prevBtn = document.getElementById("prevSlide");
+const nextBtn = document.getElementById("nextSlide");
+let activeSlideIndex = 0;
+const slideCount = slideElements.length;
+
+function showSlide(index) {
+    if (index >= slideCount) activeSlideIndex = 0;
+    else if (index < 0) activeSlideIndex = slideCount - 1;
+    else activeSlideIndex = index;
+    
+    slidesContainer.style.transform = `translateX(-${activeSlideIndex * 100}%)`;
+    
+    slideElements.forEach((slide, idx) => {
+        if (idx === activeSlideIndex) {
+            slide.classList.add("active-slide");
+        } else {
+            slide.classList.remove("active-slide");
+        }
+    });
 }
 
-function changeSlide(direction) {
-    const slides = document.querySelectorAll('.slide');
-    if (slides.length === 0) return;
+nextBtn.onclick = () => {
+    showSlide(activeSlideIndex + 1);
+    resetBannerAutoplay();
+};
 
-    slides[currentSlideIndex].classList.remove('opacity-100');
-    slides[currentSlideIndex].classList.add('opacity-0');
+prevBtn.onclick = () => {
+    showSlide(activeSlideIndex - 1);
+    resetBannerAutoplay();
+};
 
-    currentSlideIndex += direction;
+let autoplayInterval = setInterval(() => {
+    showSlide(activeSlideIndex + 1);
+}, 5000);
 
-    if (currentSlideIndex >= slides.length) currentSlideIndex = 0;
-    if (currentSlideIndex < 0) currentSlideIndex = slides.length - 1;
-
-    slides[currentSlideIndex].classList.remove('opacity-0');
-    slides[currentSlideIndex].classList.add('opacity-100');
-
-    clearInterval(carouselInterval);
-    carouselInterval = setInterval(() => changeSlide(1), 3000);
+function resetBannerAutoplay() {
+    clearInterval(autoplayInterval);
+    autoplayInterval = setInterval(() => {
+        showSlide(activeSlideIndex + 1);
+    }, 5000);
 }
+
+// ===== INITIAL INITIALIZATION RUN =====
+updateWishlistCount();
+renderProducts();
+renderWishlist();
+renderCart();
+showSlide(0);
