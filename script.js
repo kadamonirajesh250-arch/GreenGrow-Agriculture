@@ -1029,12 +1029,12 @@ checkoutForm.onsubmit = e => {
 
         // Build WhatsApp message
         const waMessage = `🌱 *GreenGrow Order Confirmed!*\n\n*Customer Details:*\n- *Name:* ${nameVal}\n- *Phone:* +91 ${phoneVal}\n- *Shipping Address:* ${addrVal}\n\n*Ordered Products:*\n${cart.map(item => `- ${item.name} (Qty: ${item.qty}) - ₹${item.price * item.qty}`).join('\n')}\n\n*Total Amount:* ₹${totalAmount}\n\nThank you for shopping with GreenGrow!`;
-        const waUrl = `https://api.whatsapp.com/send?phone=91${phoneVal}&text=${encodeURIComponent(waMessage)}`;
+        const waUrl = `https://api.whatsapp.com/send?phone=919032173897&text=${encodeURIComponent(waMessage)}`;
         
         // Open WhatsApp click-to-chat in a new tab
         window.open(waUrl, '_blank');
 
-        alert(`🎉 Om Sri Sai Traders - Order Confirmed Successfully!\n\nThank you ${nameVal}! Your payment of ₹${totalAmount} was authenticated.\n\nAn email confirmation has been sent to kadamonirajesh250@gmail.com and a WhatsApp dispatch confirmation has been loaded for +91 ${phoneVal}.\n\nOur agricultural logistics dispatch team will contact you on +91 ${phoneVal} within 24 hours to schedule delivery to your rural hub.`);
+        alert(`🎉 Om Sri Sai Traders - Order Confirmed Successfully!\n\nThank you ${nameVal}! Your payment of ₹${totalAmount} was authenticated.\n\nAn email confirmation has been sent to kadamonirajesh250@gmail.com and a WhatsApp dispatch request has been loaded for +91 9032173897.\n\nOur agricultural logistics dispatch team will contact you on +91 ${phoneVal} within 24 hours to schedule delivery to your rural hub.`);
         
         cart = [];
         saveCart();
